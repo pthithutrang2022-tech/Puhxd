@@ -1,0 +1,25 @@
+{
+  "name": "discord-music-bot",
+  "version": "2.0.0",
+  "description": "Advanced Discord Music Bot with 8D Audio Filters",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["discord", "music", "bot", "8d-audio", "filters"],
+  "author": "pthithutrang2022-tech",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.0",
+    "dotenv": "^16.3.1",
+    "distube": "^4.1.1",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
