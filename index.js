@@ -24,20 +24,25 @@ client.filters = new Collection();
 
 // Load commands
 const commandsPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(commandsPath);
-
-for (const folder of commandFolders) {
-  const folderPath = path.join(commandsPath, folder);
-  const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-  
-  for (const file of commandFiles) {
-    const filePath = path.join(folderPath, file);
-    const command = require(filePath);
+if (fs.existsSync(commandsPath)) {
+  const commandFolders = fs.readdirSync(commandsPath);
+  for (const folder of commandFolders) {
+    const folderPath = path.join(commandsPath, folder);
+    if (!fs.statSync(folderPath).isDirectory()) continue;
     
-    if (command.data) {
-      client.slashCommands.set(command.data.name, command);
-    } else if (command.name) {
-      client.commands.set(command.name, command);
+    const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
+    for (const file of commandFiles) {
+      const filePath = path.join(folderPath, file);
+      try {
+        const command = require(filePath);
+        if (command.data) {
+          client.slashCommands.set(command.data.name, command);
+        } else if (command.name) {
+          client.commands.set(command.name, command);
+        }
+      } catch (error) {
+        console.error(`Error loading command ${file}:`, error);
+      }
     }
   }
 }
@@ -46,41 +51,56 @@ for (const folder of commandFolders) {
 const filtersPath = path.join(__dirname, 'filters');
 if (fs.existsSync(filtersPath)) {
   const filterFiles = fs.readdirSync(filtersPath).filter(file => file.endsWith('.js'));
-  
   for (const file of filterFiles) {
     const filePath = path.join(filtersPath, file);
-    const filter = require(filePath);
-    client.filters.set(filter.name, filter);
+    try {
+      const filter = require(filePath);
+      if (filter.name) {
+        client.filters.set(filter.name, filter);
+      }
+    } catch (error) {
+      console.error(`Error loading filter ${file}:`, error);
+    }
   }
 }
 
 // Load event handlers
 const eventsPath = path.join(__dirname, 'events');
-const eventFolders = fs.readdirSync(eventsPath);
-
-for (const folder of eventFolders) {
-  const folderPath = path.join(eventsPath, folder);
-  const eventFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-  
-  for (const file of eventFiles) {
-    const filePath = path.join(folderPath, file);
-    const event = require(filePath);
+if (fs.existsSync(eventsPath)) {
+  const eventFolders = fs.readdirSync(eventsPath);
+  for (const folder of eventFolders) {
+    const folderPath = path.join(eventsPath, folder);
+    if (!fs.statSync(folderPath).isDirectory()) continue;
     
-    if (event.once) {
-      client.once(event.name, (...args) => event.execute(...args));
-    } else {
-      client.on(event.name, (...args) => event.execute(...args));
+    const eventFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
+    for (const file of eventFiles) {
+      const filePath = path.join(folderPath, file);
+      try {
+        const event = require(filePath);
+        if (event.once) {
+          client.once(event.name, (...args) => event.execute(...args));
+        } else {
+          client.on(event.name, (...args) => event.execute(...args));
+        }
+      } catch (error) {
+        console.error(`Error loading event ${file}:`, error);
+      }
     }
   }
 }
 
 // Error handling
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
+  console.error('❌ Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error('Failed to login:', error);
+  process.exit(1);
+});
+
+module.exports = client;
